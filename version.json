@@ -1,6 +1,6 @@
 {
-  "version": "1.0-preview",
-  "assemblyVersion": "1.0.0.0",
+  "version": "1.1-preview",
+  "assemblyVersion": "1.1.0.1",
   "cloudBuild": {
     "buildNumber": {
       "enabled": true

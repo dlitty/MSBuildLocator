@@ -30,6 +30,7 @@ namespace Microsoft.Build.MSBuildLocator
         {
             var validInstances = new List<VisualStudioInstance>();
 
+#if FEATURE_VISUALSTUDIOSETUP
             try
             {
                 // This code is not obvious. See the sample (link above) for reference.
@@ -67,9 +68,11 @@ namespace Microsoft.Build.MSBuildLocator
             {
                 // This is OK, VS "15" or greater likely not installed.
             }
+#endif
             return validInstances;
         }
 
+#if FEATURE_VISUALSTUDIOSETUP
         private static ISetupConfiguration GetQuery()
         {
             try
@@ -95,5 +98,6 @@ namespace Microsoft.Build.MSBuildLocator
         private static extern int GetSetupConfiguration(
             [MarshalAs(UnmanagedType.Interface)] [Out] out ISetupConfiguration configuration,
             IntPtr reserved);
+#endif
     }
 }

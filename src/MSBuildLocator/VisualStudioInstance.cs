@@ -9,7 +9,7 @@ namespace Microsoft.Build.MSBuildLocator
     /// <summary>
     ///     Represents an installed instance of Visual Studio.
     /// </summary>
-    public class VisualStudioInstance
+    public class VisualStudioInstance : MSBuildInstance
     {
         internal VisualStudioInstance(string name, string path, Version version, DiscoveryType discoveryType)
         {
@@ -21,28 +21,8 @@ namespace Microsoft.Build.MSBuildLocator
         }
 
         /// <summary>
-        ///     Version of the Visual Studio Instance
-        /// </summary>
-        public Version Version { get; }
-
-        /// <summary>
         ///     Path to the Visual Studio installation
         /// </summary>
         public string VisualStudioRootPath { get; }
-
-        /// <summary>
-        ///     Full name of the Visual Studio instance with SKU name
-        /// </summary>
-        public string Name { get; }
-
-        /// <summary>
-        ///     Path to the MSBuild associated with this version of Visual Studio.
-        /// </summary>
-        public string MSBuildPath { get; }
-
-        /// <summary>
-        ///     Indicates how this instance was discovered.
-        /// </summary>
-        public DiscoveryType DiscoveryType { get; }
     }
 }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Microsoft.Build.MSBuildLocator
 {
@@ -40,28 +41,52 @@ namespace Microsoft.Build.MSBuildLocator
         public static IEnumerable<VisualStudioInstance> QueryVisualStudioInstances(
             VisualStudioInstanceQueryOptions options)
         {
-            return GetInstances().Where(i => i.DiscoveryType.HasFlag(options.DiscoveryTypes));
+            return GetVSInstances().Where(i => i.DiscoveryType.HasFlag(options.DiscoveryTypes));
         }
 
         /// <summary>
         ///     Discover instances of Visual Studio and register the first one. See <see cref="RegisterInstance" />.
         /// </summary>
         /// <returns>Instance of Visual Studio found and registered.</returns>
-        public static VisualStudioInstance RegisterDefaults()
+        public static MSBuildInstance RegisterDefaults()
         {
-            var instance = GetInstances().FirstOrDefault();
+            MSBuildInstance instance = GetVSInstances().FirstOrDefault() as MSBuildInstance;
+            if (instance == null)
+            {
+                instance = GetSdkInstances().FirstOrDefault();
+            }
             RegisterInstance(instance);
 
             return instance;
         }
 
         /// <summary>
+        ///    Finds all installed .NET Core SDK Instances
+        /// </summary>
+        /// <returns>The dot net sdk instances.</returns>
+        public static IEnumerable<DotNetSdkInstance> GetDotNetSdkInstances()
+        {
+            return GetSdkInstances();
+        }
+
+        /// <summary>
+        ///     Finds and returns all MSBuild instances - both Visual Studio (Windows only) and .NET Core SDK instances.
+        /// </summary>
+        /// <returns>The all MSBuild instances.</returns>
+        public static IEnumerable<MSBuildInstance> GetAllMSBuildInstances()
+        {
+            var allInstances = new List<MSBuildInstance>();
+            allInstances.AddRange(GetVSInstances());
+            allInstances.AddRange(GetSdkInstances());
+            return allInstances;
+        }
+
+        /// <summary>
         ///     Add assembly resolution for Microsoft.Build core dlls in the current AppDomain from the specified
-        ///     instance of Visual Studio. See <see cref="QueryVisualStudioInstances()" /> to discover Visual Studio
-        ///     instances or use <see cref="RegisterDefaults" />.
+        ///     instance of a .NET SDK version.
         /// </summary>
         /// <param name="instance"></param>
-        public static void RegisterInstance(VisualStudioInstance instance)
+        public static void RegisterInstance(MSBuildInstance instance)
         {
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance));
@@ -79,7 +104,7 @@ namespace Microsoft.Build.MSBuildLocator
             };
         }
 
-        private static IEnumerable<VisualStudioInstance> GetInstances()
+        private static IEnumerable<VisualStudioInstance> GetVSInstances()
         {
             var devConsole = GetDevConsoleInstance();
             if (devConsole != null)
@@ -108,6 +133,43 @@ namespace Microsoft.Build.MSBuildLocator
             }
 
             return null;
+        }
+
+        private static IEnumerable<DotNetSdkInstance> GetSdkInstances()
+        {
+            var isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            var paths = Environment.GetEnvironmentVariable("PATH");
+            var sep = (isWindows ? ';' : ':');
+            var cliExe = (isWindows ? "dotnet.exe" : "dotnet");
+
+            string basePath = null;
+            foreach (var path in paths.Split(sep))
+            {
+                if (File.Exists(Path.Combine(path, cliExe)))
+                {
+                    basePath = path;
+                    break;
+                }
+            }
+
+            if (String.IsNullOrEmpty(basePath))
+            {
+                throw new ApplicationException("Unable to determine base directory for .NET Core SDKs");
+            }
+
+            var sdksDir = Path.Combine(basePath, "sdk");
+
+            foreach (var versionDir in Directory.GetDirectories(sdksDir))
+            {
+                if (File.Exists(Path.Combine(versionDir, "MSBuild.dll")))
+                {
+                    Version version;
+                    if (Version.TryParse(Path.GetDirectoryName(versionDir), out version))
+                    {
+                        yield return new DotNetSdkInstance(version, versionDir, DiscoveryType.Other);
+                    }
+                }
+            }
         }
     }
 }

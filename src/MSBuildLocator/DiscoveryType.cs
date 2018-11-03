@@ -20,6 +20,11 @@ namespace Microsoft.Build.MSBuildLocator
         /// <summary>
         ///     Discovery via Visual Studio Setup API.
         /// </summary>
-        VisualStudioSetup = 2
+        VisualStudioSetup = 2,
+
+        /// <summary>
+        /// Manual discovery
+        /// </summary>
+        Other = 3
     }
 }
