@@ -159,17 +159,24 @@ namespace Microsoft.Build.MSBuildLocator
 
             var sdksDir = Path.Combine(basePath, "sdk");
 
+            var instances = new List<DotNetSdkInstance>();
+
             foreach (var versionDir in Directory.GetDirectories(sdksDir))
             {
                 if (File.Exists(Path.Combine(versionDir, "MSBuild.dll")))
                 {
+                    var versionString = Path.GetFileName(versionDir);
                     Version version;
-                    if (Version.TryParse(Path.GetDirectoryName(versionDir), out version))
+                    if (Version.TryParse(versionString, out version))
                     {
-                        yield return new DotNetSdkInstance(version, versionDir, DiscoveryType.Other);
+                        instances.Add(new DotNetSdkInstance(version, versionDir, DiscoveryType.Other));
                     }
                 }
             }
+
+            instances.Sort((lhs, rhs) => rhs.Version.CompareTo(lhs.Version));
+
+            return instances;
         }
     }
 }

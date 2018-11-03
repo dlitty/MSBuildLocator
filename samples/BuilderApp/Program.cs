@@ -22,7 +22,7 @@ namespace BuilderApp
             // Before we can build we need to resolve MSBuild assemblies. We could:
             //   1) Use defaults and call: MSBuildLocator.RegisterDefaults();
             //   2) Do something fancier and ask the user. As an example we'll do that.
-            var instances = MSBuildLocator.QueryVisualStudioInstances().ToList();
+            var instances = MSBuildLocator.GetAllMSBuildInstances().ToList();
             var instanceToUse = AskWhichVisualStudioInstanceToUse(instances);
 
             // Calling RegisterInstance will subscribe to AssemblyResolve event. After this we can now
@@ -36,7 +36,7 @@ namespace BuilderApp
             Console.WriteLine($"Build result: {result}");
         }
 
-        private static VisualStudioInstance AskWhichVisualStudioInstanceToUse(List<VisualStudioInstance> instances)
+        private static MSBuildInstance AskWhichVisualStudioInstanceToUse(List<MSBuildInstance> instances)
         {
             if (instances.Count == 0)
             {
@@ -60,7 +60,7 @@ namespace BuilderApp
             Console.WriteLine();
             Console.WriteLine("Select an instance of MSBuild: ");
             var answer = Console.ReadLine();
-            VisualStudioInstance instanceUsed = null;
+            MSBuildInstance instanceUsed = null;
 
             if (int.TryParse(answer, out int instanceChoice) && instanceChoice > 0 && instanceChoice <= instances.Count)
             {
